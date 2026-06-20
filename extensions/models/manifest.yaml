@@ -1,0 +1,19 @@
+manifestVersion: 1
+
+name: "@sntxrr/openrouter"
+version: "2026.06.20.1"
+description: "Chat completions and model catalog listing against the OpenRouter LLM gateway API"
+repository: "https://github.com/sntxrr/swamp-openrouter"
+
+models:
+  - openrouter.ts
+
+additionalFiles:
+  - README.md
+  - LICENSE.md
+
+labels:
+  - llm
+  - openrouter
+  - ai
+  - chat
