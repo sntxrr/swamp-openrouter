@@ -264,3 +264,10 @@ Deno.test("chat aborts a request that never answers after timeoutMs", async () =
     held.forEach((c) => c.close());
   }
 });
+
+Deno.test("upgrade to 2026.09.25.2 keeps existing arguments intact", () => {
+  const upgrade = model.upgrades.at(-1)!;
+  assertEquals(upgrade.toVersion, model.version);
+  const old = { apiKey: "sk-or-test", defaultModel: "openai/gpt-4o-mini" };
+  assertEquals(upgrade.upgradeAttributes(old), old);
+});

@@ -1,0 +1,82 @@
+{
+  "extension": "@sntxrr/openrouter",
+  "version": "2026.09.25.2",
+  "reviewedAt": "2026-09-25T16:19:02Z",
+  "dimensions": [
+    {
+      "id": "credentials-secrets",
+      "verdict": "pass",
+      "note": "apiKey is `.meta({ sensitive: true })` with `.min(1)`. Confirmed live: swamp refuses `--global-arg apiKey=<literal>` because the value would be stored in cleartext. The key travels only in the Authorization header. Error messages carry the response status and body, never request headers."
+    },
+    {
+      "id": "logging-quality",
+      "verdict": "pass",
+      "note": "Structured lines: the model requested, the completion id and the name it was stored under, the catalog size, and throttle retries with status and delay. Neither message content nor the key is logged."
+    },
+    {
+      "id": "error-handling",
+      "verdict": "pass",
+      "note": "Non-retryable statuses throw with status and body. Missing `choices`/`data` arrays throw with the payload. No model (neither arg nor defaultModel) throws before any network call. An API error writes nothing (tested)."
+    },
+    {
+      "id": "testing-completeness",
+      "verdict": "pass",
+      "note": "11 tests: success write, API error writes nothing, missing model, 429 retry, catalog success and bad shape, default requestId, reserved-name rejection, sensitive meta, a real-socket tarpit timeout, and the upgrade entry. The upgrade path was also exercised end to end in real swamp (upgradable -> current)."
+    },
+    {
+      "id": "idempotency-resilience",
+      "verdict": "pass",
+      "note": "429/5xx retried up to 5 attempts with exponential backoff and jitter, honouring Retry-After. New per-attempt `timeoutMs` (default 120000) via AbortSignal on both fetches: previously a stalled connection hung the method indefinitely. Retry responses are cancelled before sleeping. Note: `chat` is inherently non-idempotent (each attempt is a billable generation), so a 5xx after generation could bill twice; this is accepted for a gateway client."
+    },
+    {
+      "id": "api-contracts",
+      "verdict": "pass",
+      "note": "POST {baseUrl}/chat/completions and GET {baseUrl}/models against the OpenAI-compatible OpenRouter API. Snake-case usage is mapped to camelCase and validated by CompletionSchema."
+    },
+    {
+      "id": "resource-management",
+      "verdict": "pass",
+      "note": "No long-lived handles. Error bodies are read; retryable bodies are cancelled before backoff; AbortSignal.timeout timers are owned by the runtime."
+    },
+    {
+      "id": "published-surface-hygiene",
+      "verdict": "pass",
+      "note": "README examples use generic names (`my-router`, `llm-secrets`, `openai/gpt-4o-mini`). No deployment-specific hosts, vaults or figures appear in the code, README or tests."
+    },
+    {
+      "id": "schema-strictness",
+      "verdict": "pass",
+      "note": "messages min 1 with a role enum; temperature 0-2; maxTokens a positive int; requestId non-empty and not `latest`; apiKey non-empty; baseUrl/siteUrl validated as URLs; timeoutMs a positive int."
+    },
+    {
+      "id": "lifetime-gc",
+      "verdict": "pass",
+      "note": "completion: infinite lifetime, garbageCollection 20. modelCatalog: infinite lifetime, garbageCollection 5."
+    },
+    {
+      "id": "crud-completeness",
+      "verdict": "na",
+      "note": "A stateless API-gateway client. It manages no remote resource lifecycle, so there is nothing to create, update or delete."
+    },
+    {
+      "id": "preflight-checks",
+      "verdict": "pass",
+      "note": "The model requirement and the reserved-name check run at argument validation or before any network call, so misconfiguration fails without spending."
+    },
+    {
+      "id": "instance-names",
+      "verdict": "pass",
+      "note": "This release's primary fix: the previous default requestId `latest` is reserved by swamp and failed every default call. The default is now `chat`, and `latest` is rejected with an explicit message. The catalog is stored under the fixed name `catalog`."
+    },
+    {
+      "id": "data-access",
+      "verdict": "pass",
+      "note": "All output goes through context.writeResource into the two declared specs, and is readable with `swamp data get <model> chat|catalog`."
+    },
+    {
+      "id": "version-upgrades",
+      "verdict": "pass",
+      "note": "2026.09.25.1 shipped without an `upgrades` array, which stranded every existing definition (the publish printed that warning). 2026.09.25.2 adds a no-op entry: the 2026.09.25.1 changes were additive (`timeoutMs` is defaulted at parse; `apiKey` gained `.min(1)` and sensitive meta), so no stored argument needs rewriting. Proven in a scratch repo: a definition stamped 2026.06.20.1 read `upgradable`, and after one `listModels` run it read `current` at 2026.09.25.2 with the vaulted `apiKey` expression unchanged. A unit test pins the entry's toVersion to model.version and its identity transform."
+    }
+  ]
+}
