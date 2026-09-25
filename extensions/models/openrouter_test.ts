@@ -57,7 +57,7 @@ Deno.test("chat stores a completion on success", async () => {
         {
           messages: [{ role: "user", content: "hi" }],
           model: "openai/gpt-4o-mini",
-          requestId: "latest",
+          requestId: "chat",
         },
         context,
       );
@@ -67,7 +67,7 @@ Deno.test("chat stores a completion on success", async () => {
   const written = getWrittenResources();
   assertEquals(written.length, 1);
   assertEquals(written[0].specName, "completion");
-  assertEquals(written[0].name, "latest");
+  assertEquals(written[0].name, "chat");
   assertEquals(written[0].data.id, "gen-123");
   assertEquals(written[0].data.usage, {
     promptTokens: 5,
@@ -94,7 +94,7 @@ Deno.test("chat throws on API error and writes nothing", async () => {
             {
               messages: [{ role: "user", content: "hi" }],
               model: "openai/gpt-4o-mini",
-              requestId: "latest",
+              requestId: "chat",
             },
             context,
           ),
@@ -113,7 +113,7 @@ Deno.test("chat requires a model when no defaultModel is set", async () => {
   await assertRejects(
     () =>
       model.methods.chat.execute(
-        { messages: [{ role: "user", content: "hi" }], requestId: "latest" },
+        { messages: [{ role: "user", content: "hi" }], requestId: "chat" },
         context,
       ),
     Error,
@@ -153,7 +153,7 @@ Deno.test("chat retries once on 429 then succeeds", async () => {
         {
           messages: [{ role: "user", content: "hi" }],
           model: "openai/gpt-4o-mini",
-          requestId: "latest",
+          requestId: "chat",
         },
         context,
       );
@@ -213,4 +213,19 @@ Deno.test("listModels throws when response shape is unexpected", async () => {
   );
 
   assertEquals(getWrittenResources().length, 0);
+});
+
+Deno.test("chat requestId defaults to a non-reserved name", () => {
+  const args = model.methods.chat.arguments.parse({
+    messages: [{ role: "user", content: "hi" }],
+  });
+  assertEquals(args.requestId, "chat");
+});
+
+Deno.test("chat rejects the swamp-reserved requestId \"latest\"", () => {
+  const result = model.methods.chat.arguments.safeParse({
+    messages: [{ role: "user", content: "hi" }],
+    requestId: "latest",
+  });
+  assertEquals(result.success, false);
 });

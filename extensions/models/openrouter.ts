@@ -31,7 +31,10 @@ const ChatArgsSchema = z.object({
   model: z.string().optional(),
   temperature: z.number().min(0).max(2).optional(),
   maxTokens: z.number().int().positive().optional(),
-  requestId: z.string().default("latest").describe(
+  // swamp reserves the data name "latest"; writing to it fails the run.
+  requestId: z.string().min(1).refine((id) => id !== "latest", {
+    message: 'requestId "latest" is reserved by swamp; use another name',
+  }).default("chat").describe(
     "Instance name for the stored completion — use distinct values to keep separate conversation histories",
   ),
 });
@@ -127,7 +130,7 @@ async function withRetry<T>(
  */
 export const model = {
   type: "@sntxrr/openrouter",
-  version: "2026.06.20.1",
+  version: "2026.09.25.1",
   globalArguments: GlobalArgsSchema,
   resources: {
     "completion": {
