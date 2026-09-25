@@ -34,12 +34,13 @@ swamp model method run my-router chat \
 
 Optional inputs: `model` (overrides `defaultModel`), `temperature`,
 `maxTokens`, and `requestId` (the stored instance name — use distinct values to
-keep separate conversation histories; defaults to `"latest"`).
+keep separate conversation histories; defaults to `"chat"`; `"latest"` is
+reserved by swamp and rejected).
 
 The result is written to the `completion` resource, readable via:
 
 ```bash
-swamp data get my-router --name latest --json
+swamp data get my-router chat --json
 ```
 
 ### `listModels`
