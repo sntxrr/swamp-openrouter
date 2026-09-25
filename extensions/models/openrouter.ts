@@ -140,8 +140,18 @@ async function withRetry<T>(
  */
 export const model = {
   type: "@sntxrr/openrouter",
-  version: "2026.09.25.1",
+  version: "2026.09.25.2",
   globalArguments: GlobalArgsSchema,
+  upgrades: [
+    {
+      // 2026.09.25.1 added timeoutMs (defaulted at parse) and tightened
+      // apiKey; no stored argument needs rewriting.
+      toVersion: "2026.09.25.2",
+      description:
+        "Adopt timeoutMs default and sensitive apiKey; no argument changes",
+      upgradeAttributes: (old: Record<string, unknown>) => old,
+    },
+  ],
   resources: {
     "completion": {
       description: "Chat completion response from OpenRouter",
