@@ -7,9 +7,15 @@
 // extensions/models/openrouter.ts
 import { z } from "npm:zod@4";
 
+const DEFAULT_TIMEOUT_MS = 120_000;
+
 const GlobalArgsSchema = z.object({
-  apiKey: z.string().describe("OpenRouter API key (sk-or-...)"),
-  baseUrl: z.string().url().default("https://openrouter.ai/api/v1"),
+  apiKey: z.string().min(1).meta({ sensitive: true }).describe(
+    "OpenRouter API key (sk-or-...). Use a vault reference.",
+  ),
+  baseUrl: z.string().url().default("https://openrouter.ai/api/v1").describe(
+    "OpenRouter API root. Change only for a proxy or test server.",
+  ),
   defaultModel: z.string().optional().describe(
     "Model slug used when a chat call doesn't override it, e.g. openai/gpt-4o-mini",
   ),
@@ -17,6 +23,9 @@ const GlobalArgsSchema = z.object({
     "Sent as HTTP-Referer for OpenRouter's app rankings",
   ),
   siteName: z.string().optional().describe("Sent as X-Title"),
+  timeoutMs: z.number().int().positive().default(DEFAULT_TIMEOUT_MS).describe(
+    "Per-attempt HTTP timeout in milliseconds; a stalled request is aborted and fails the run.",
+  ),
 });
 
 type GlobalArgs = z.infer<typeof GlobalArgsSchema>;
@@ -113,6 +122,7 @@ async function withRetry<T>(
       const body = await res.text();
       throw new Error(`OpenRouter API error ${res.status}: ${body}`);
     }
+    await res.body?.cancel(); // release the connection before sleeping
     const delay = retryAfterMs(res) ??
       (baseDelay * 2 ** attempt + Math.random() * 500);
     logger.warn(
@@ -195,6 +205,9 @@ export const model = {
               method: "POST",
               headers: buildHeaders(globalArgs),
               body: JSON.stringify(body),
+              signal: AbortSignal.timeout(
+                globalArgs.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+              ),
             }),
           (res) => res.json(),
           logger,
@@ -266,6 +279,9 @@ export const model = {
             fetch(`${globalArgs.baseUrl}/models`, {
               method: "GET",
               headers: buildHeaders(globalArgs),
+              signal: AbortSignal.timeout(
+                globalArgs.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+              ),
             }),
           (res) => res.json(),
           logger,

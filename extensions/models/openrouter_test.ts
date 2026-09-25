@@ -229,3 +229,38 @@ Deno.test("chat rejects the swamp-reserved requestId \"latest\"", () => {
   });
   assertEquals(result.success, false);
 });
+
+Deno.test("apiKey is marked sensitive so swamp redacts it", () => {
+  const meta = model.globalArguments.shape.apiKey.meta();
+  assertEquals(meta?.sensitive, true);
+});
+
+Deno.test("chat aborts a request that never answers after timeoutMs", async () => {
+  // A real tarpit: accepts the connection, never writes a byte.
+  const listener = Deno.listen({ hostname: "127.0.0.1", port: 0 });
+  const held: Deno.Conn[] = [];
+  (async () => {
+    for await (const conn of listener) held.push(conn);
+  })();
+  const { port } = listener.addr as Deno.NetAddr;
+  const { context } = chatContext({
+    ...GLOBAL_ARGS,
+    baseUrl: `http://127.0.0.1:${port}`,
+    timeoutMs: 200,
+  });
+  try {
+    await assertRejects(() =>
+      model.methods.chat.execute(
+        {
+          messages: [{ role: "user", content: "hi" }],
+          model: "openai/gpt-4o-mini",
+          requestId: "chat",
+        },
+        context,
+      )
+    );
+  } finally {
+    listener.close();
+    held.forEach((c) => c.close());
+  }
+});
