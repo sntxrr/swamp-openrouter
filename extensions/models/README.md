@@ -64,3 +64,4 @@ The result is written to the `modelCatalog` resource as `catalog`.
 | `defaultModel` | No       | Model slug used when `chat` doesn't override it           |
 | `siteUrl`      | No       | Sent as `HTTP-Referer` for OpenRouter's app rankings       |
 | `siteName`     | No       | Sent as `X-Title`                                          |
+| `timeoutMs`    | No       | Per-attempt HTTP timeout in ms (default `120000`)          |
