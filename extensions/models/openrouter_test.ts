@@ -3,7 +3,7 @@ import { assertEquals, assertRejects } from "jsr:@std/assert@1.0.19";
 import {
   createModelTestContext,
   withMockedFetch,
-} from "jsr:@swamp-club/swamp-testing";
+} from "jsr:@swamp-club/swamp-testing@0.20260928.39";
 import { model } from "./openrouter.ts";
 
 type ChatContext = Parameters<typeof model.methods.chat.execute>[1];
