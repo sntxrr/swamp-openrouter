@@ -1,8 +1,9 @@
 manifestVersion: 1
 
 name: "@sntxrr/openrouter"
-version: "2026.09.25.2"
+version: "2026.10.14.1"
 description: "Chat completions and model catalog listing against the OpenRouter LLM gateway API"
+license: MIT
 repository: "https://github.com/sntxrr/swamp-openrouter"
 
 models:
